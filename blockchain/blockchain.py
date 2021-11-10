@@ -25,7 +25,7 @@ class Blockchain:
         new_proof = 1
         check_proof = False
         while check_proof is False:
-            # just a simple example non simetric formula
+            # a simple example non simetric formula
             hash_operation = hashlib.sha256(str(new_proof**2 - previous_proof**2).encode()).hexdigest() 
             # only hashes starting with 4 ceros, not hard to find
             if hash_operation[:4] == '0000':
@@ -34,4 +34,23 @@ class Blockchain:
                 new_proof += 1
         return new_proof
 
+    def hash(self, block):
+        encode_block = json.dumps(block, sort_key  = True).encode()
+        return hashlib.sha256(encode_block).hexdigest()
+
+    def is_chain_value(self, chain):
+        previous_block = chain[0]
+        block_index  = 1
+        while block_index < len(chain):
+            block = chain[block_index]
+            if block['previous_hash'] != self.hash(previous_block):
+                return False
+            previous_proof = previous_block['proof']
+            proof = block['proof']
+            hash_operation = hashlib.sha256(str(proof**2 - previous_proof**2).encode()).hexdigest() 
+            if hash_operation[:4] != '0000':
+                return False
+            previous_block = block
+            block_index += 1
+        return True
 # mining
