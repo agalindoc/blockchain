@@ -7,7 +7,7 @@ from flask import Flask, jsonify
 class Blockchain:
     def __init__(self):
         self.chain = []
-        self.create_block(proof = 1, previous_has = '0')
+        self.create_block(proof = 1, previous_hash = '0')
 
     def create_block(self, proof, previous_hash):
         block = {'index' : len(self.chain)+1,
@@ -35,7 +35,7 @@ class Blockchain:
         return new_proof
 
     def hash(self, block):
-        encode_block = json.dumps(block, sort_key  = True).encode()
+        encode_block = json.dumps(block, sort_keys  = True).encode()
         return hashlib.sha256(encode_block).hexdigest()
 
     def is_chain_value(self, chain):
@@ -53,4 +53,36 @@ class Blockchain:
             previous_block = block
             block_index += 1
         return True
+
 # mining
+
+# create the web app
+app = Flask(__name__)
+
+# create a blockchain
+blockchain = Blockchain()
+
+# mine new block
+@app.route('/mine_block', methods=['GET'])
+def mine_block():
+    previous_block = blockchain.get_previous_block()
+    previous_proof = previous_block['proof']
+    proof = blockchain.proof_of_work(previous_proof)
+    previous_hash = blockchain.hash(previous_block)
+    block = blockchain.create_block(proof, previous_hash)    
+    response  = {'message':'Congratulations! new block mined!', 
+    'index':block['index'],
+    'timestamp':block['timestamp'],
+    'proof':block['proof'],
+    'previous_hash':block['previous_hash']}
+    return jsonify(response), 200
+
+# get the full blockchain
+@app.route('/get_chain', methods=['GET'])
+def get_chain():
+    response = {'chain':blockchain.chain,
+    'length':len(blockchain.chain)}
+    return jsonify(response), 200
+
+# run app
+app.run(host = '0.0.0.0', port = 5000) # only if you trust your network pal's
